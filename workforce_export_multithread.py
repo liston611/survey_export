@@ -90,6 +90,13 @@ def upload_compressed(feature_layer, feature, comp_path):
     attachments_names = [attachment['name'] for attachment in attachments]
 
     stop_abbr = str(feature.attributes['location'][:6])
+    if len(stop_abbr) == 6:
+        try:
+            int(stop_abbr)
+        except:
+            stop_abbr = 'OTHER_'
+    else:
+        stop_abbr = 'OTHER_'
     file_path_comp = os.path.join(comp_path, stop_abbr)
 
     for dirpath, dirnames, filenames in os.walk(file_path_comp, topdown=False):
@@ -113,6 +120,13 @@ def delete_fullres(feature_layer, feature, attachment, base_path, comp_path):
     if wrkordr == '':
         wrkordr = 'BLANK'
     stop_abbr = str(feature.attributes['location'][:6])
+    if len(stop_abbr) == 6:
+        try:
+            int(stop_abbr)
+        except:
+            stop_abbr = 'OTHER_'
+    else:
+        stop_abbr = 'OTHER_'
     folder_path = os.path.join(base_path, stop_abbr)
     folder_path_comp = os.path.join(comp_path, stop_abbr)
     os.makedirs(folder_path, exist_ok=True)
