@@ -7,8 +7,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 # Compress image
-def compress_img(img_path, img_path_comp, quality = 65):
-    image = Image.open(img_path)
+def compress_img(folder_path, folder_path_comp, quality = 65):
+    image = Image.open(folder_path)
 
     if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
@@ -32,9 +32,10 @@ def compress_img(img_path, img_path_comp, quality = 65):
     width, height = image.size
     new_size = (width//2, height//2)
     resized_image = image.resize(new_size)
-
-    resized_image.save(img_path_comp, quality = quality, optimize=True)
-    print(f"Compressed photo saved at {img_path_comp}")
+    
+    os.makedirs(folder_path_comp, exist_ok=True)
+    resized_image.save(folder_path_comp, quality = quality, optimize=True)
+    print(f"Compressed photo saved at {folder_path_comp}")
 
 
 # for feature in features:
@@ -47,7 +48,6 @@ def download_and_rename_attachment(feature, attachment, base_path, comp_path):
     folder_path = os.path.join(base_path, bus_route, stop_abbr)
     folder_path_comp = os.path.join(comp_path, bus_route, stop_abbr)
     os.makedirs(folder_path, exist_ok=True)
-    os.makedirs(folder_path_comp, exist_ok=True)
 
     attachment_id = attachment['id']
     attachment_name = attachment['name']
@@ -154,8 +154,12 @@ def execute_delete():
             future.result()  # You can handle exceptions here or get the result
 
 
-# Your client ID from the registered application
-client_id = 'f3Gvne679NhcK7ts'
+# client ID from the registered application
+from configparser import ConfigParser
+
+config = ConfigParser()
+config.read('config.ini')
+client_id = config['DEFAULT']['CLIENT_ID']
 
 # The URL of your ArcGIS Online organization
 org_url = 'https://martaonline.maps.arcgis.com'
