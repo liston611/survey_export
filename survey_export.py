@@ -4,8 +4,12 @@ import os
 import getpass
 import pandas as pd
 
-# Your client ID from the registered application
-client_id = 'f3Gvne679NhcK7ts'
+# client ID from the registered application
+from configparser import ConfigParser
+
+config = ConfigParser()
+config.read('config.ini')
+client_id = config['DEFAULT']['CLIENT_ID']
 
 # The URL of your ArcGIS Online organization
 org_url = 'https://martaonline.maps.arcgis.com'

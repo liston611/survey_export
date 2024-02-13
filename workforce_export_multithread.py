@@ -39,21 +39,25 @@ def compress_img(folder_path, folder_path_comp, quality = 65):
 
 
 # for feature in features:
-def download_and_rename_attachment(feature, attachment, base_path, comp_path):
-    object_id = feature.attributes['objectid']
-    creation_date = pd.to_datetime(feature.attributes['CreationDate'], unit='ms')
-    date_str = creation_date.strftime('%m%d%y-%H%M')
-    bus_route = str(feature.attributes['bus_route'])
-    stop_abbr = str(feature.attributes['Abbr'])
-    folder_path = os.path.join(base_path, bus_route, stop_abbr)
-    folder_path_comp = os.path.join(comp_path, bus_route, stop_abbr)
+def download_and_rename_attachment(feature_layer, feature, attachment, base_path, comp_path):
+    object_id = feature.attributes['OBJECTID']
+    creation_date = pd.to_datetime(feature.attributes['inprogressdate'], unit='ms')
+    try:
+        date_str = creation_date.strftime('%m%d%y-%H%M')
+    except:
+        creation_date = pd.to_datetime(feature.attributes['CreationDate'], unit='ms')
+        date_str = creation_date.strftime('%m%d%y-%H%M')
+    wrkordr = str(feature.attributes['workorderid'])
+    stop_abbr = str(feature.attributes['location'][:6])
+    folder_path = os.path.join(base_path, stop_abbr)
+    folder_path_comp = os.path.join(comp_path, stop_abbr)
     os.makedirs(folder_path, exist_ok=True)
 
     attachment_id = attachment['id']
     attachment_name = attachment['name']
     file_str, attachment_type = os.path.splitext(attachment_name)
-    file_name = f"{stop_abbr}_{date_str}_OID{object_id}-{attachment_id}{attachment_type}"
-    file_name_comp = f"{stop_abbr}_{date_str}_OID{object_id}-{attachment_id}_comp{attachment_type}"
+    file_name = f"{stop_abbr}_{date_str}_{wrkordr}_OID{object_id}_{attachment_id}{attachment_type}"
+    file_name_comp = f"{stop_abbr}_{date_str}_{wrkordr}_OID{object_id}_{attachment_id}_comp{attachment_type}"
     file_path = os.path.join(folder_path, file_name)
     file_path_comp = os.path.join(folder_path_comp, file_name_comp)
     
@@ -69,40 +73,44 @@ def download_and_rename_attachment(feature, attachment, base_path, comp_path):
             compress_img(file_path, file_path_comp)
 
 
-def upload_compressed(feature, comp_path):
+def upload_compressed(feature_layer, feature, comp_path):
     # iterate features
-    ## find feature objectID
-    object_id = feature.attributes['objectid']
+    ## find feature OBJECTID
+    object_id = feature.attributes['OBJECTID']
     attachments = feature_layer.attachments.get_list(oid=object_id)
     attachments_names = [attachment['name'] for attachment in attachments]
 
-    bus_route = str(feature.attributes['bus_route'])
-    stop_abbr = str(feature.attributes['Abbr'])
-    file_path_comp = os.path.join(comp_path, bus_route, stop_abbr)
+    stop_abbr = str(feature.attributes['location'][:6])
+    file_path_comp = os.path.join(comp_path, stop_abbr)
 
     for dirpath, dirnames, filenames in os.walk(file_path_comp, topdown=False):
          for filename in filenames:
-             file_oid = int(re.search(r"_OID(\d{1,4})-", filename)[1])
+             file_oid = int(re.search(r"_OID(\d{1,4})_", filename)[1])
              if (not filename in attachments_names) and file_oid == object_id:
                  feature_layer.attachments.add(oid=object_id, file_path = os.path.join(file_path_comp,filename))
                  print(f"Photo {filename} uploaded at {file_path_comp}")
 
 
-def delete_fullres(feature, attachment, base_path, comp_path):
-    object_id = feature.attributes['objectid']
-    creation_date = pd.to_datetime(feature.attributes['CreationDate'], unit='ms')
+def delete_fullres(feature_layer, feature, attachment, base_path, comp_path):
+    object_id = feature.attributes['OBJECTID']
+    creation_date = pd.to_datetime(feature.attributes['inprogressdate'], unit='ms')
+    try:
+        date_str = creation_date.strftime('%m%d%y-%H%M')
+    except:
+        creation_date = pd.to_datetime(feature.attributes['CreationDate'], unit='ms')
+        date_str = creation_date.strftime('%m%d%y-%H%M')
     date_str = creation_date.strftime('%m%d%y-%H%M')
-    bus_route = str(feature.attributes['bus_route'])
+    wrkordr = str(feature.attributes['workorderid'])
     stop_abbr = str(feature.attributes['Abbr'])
-    folder_path = os.path.join(base_path, bus_route, stop_abbr)
-    folder_path_comp = os.path.join(comp_path, bus_route, stop_abbr)
+    folder_path = os.path.join(base_path, stop_abbr)
+    folder_path_comp = os.path.join(comp_path, stop_abbr)
     os.makedirs(folder_path, exist_ok=True)
     os.makedirs(folder_path_comp, exist_ok=True)
 
     attachment_id = attachment['id']
     attachment_name = attachment['name']
     file_str, attachment_type = os.path.splitext(attachment_name)
-    file_name = f"{stop_abbr}_{date_str}_OID{object_id}-{attachment_id}{attachment_type}"
+    file_name = f"{stop_abbr}_{date_str}_{wrkordr}_OID{object_id}_{attachment_id}{attachment_type}"
     file_path = os.path.join(folder_path, file_name)
     
     # Delete the attachment
@@ -111,28 +119,40 @@ def delete_fullres(feature, attachment, base_path, comp_path):
             feature_layer.attachments.delete(oid=object_id, attachment_id=attachment_id)
             print(f"Photo {attachment_name} deleted")
         else:
-            print(f"Bus Stop {stop_abbr} photo does not exist on drive or is different file size. Attachment size: {attachment['size']} Downloaded: {os.path.getsize(file_path)}")
+            print(f"Bus Stop {stop_abbr} photo does not exist on drive: {os.path.exists(file_path)} or is different file size. Attachment size: {attachment['size']} Downloaded: {os.path.getsize(file_path)}")
             
 
 # Use ThreadPoolExecutor to download attachments in parallel
 def execute_download():
+    item_id = '00e4733282ec4ac5968b7548ca9e2742'
+    item = gis.content.get(item_id)
+    feature_layer = item.layers[0]  # Assuming it's the first layer
+    # Query the feature layer for records
+    features = feature_layer.query(where="1=1", out_fields="*", return_attachments=False).features
+
     with ThreadPoolExecutor(max_workers=10) as executor:
         # Store future tasks
         future_to_attachment = {executor.submit(
-            download_and_rename_attachment, feature, attachment, 
+            download_and_rename_attachment, feature_layer, feature, attachment, 
             base_path, comp_path): (feature, attachment)
                                 for feature in features for attachment in feature_layer.attachments.get_list(
-                                    oid=feature.attributes['objectid'])}
+                                    oid=feature.attributes['OBJECTID'])}
         # Process completed futures
         for future in as_completed(future_to_attachment):
             future.result()  # You can handle exceptions here or get the result
 
 
 def execute_upload():
+    item_id = '00e4733282ec4ac5968b7548ca9e2742'
+    item = gis.content.get(item_id)
+    feature_layer = item.layers[0]  # Assuming it's the first layer
+    # Query the feature layer for records
+    features = feature_layer.query(where="1=1", out_fields="*", return_attachments=False).features
+
     with ThreadPoolExecutor(max_workers=10) as executor:
         # Store future tasks
         future_to_attachment = {executor.submit(
-            upload_compressed, feature, 
+            upload_compressed, feature_layer, feature, 
             comp_path): (feature)
                                 for feature in features
                                 }
@@ -142,13 +162,19 @@ def execute_upload():
 
 
 def execute_delete():
+    item_id = '00e4733282ec4ac5968b7548ca9e2742'
+    item = gis.content.get(item_id)
+    feature_layer = item.layers[0]  # Assuming it's the first layer
+    # Query the feature layer for records
+    features = feature_layer.query(where="1=1", out_fields="*", return_attachments=False).features
+
     with ThreadPoolExecutor(max_workers=10) as executor:
         # Store future tasks
         future_to_attachment = {executor.submit(
-            delete_fullres, feature, attachment, 
+            delete_fullres, feature_layer, feature, attachment, 
             base_path, comp_path): (feature, attachment)
                                 for feature in features for attachment in feature_layer.attachments.get_list(
-                                    oid=feature.attributes['objectid'])}
+                                    oid=feature.attributes['OBJECTID'])}
         # Process completed futures
         for future in as_completed(future_to_attachment):
             future.result()  # You can handle exceptions here or get the result
@@ -170,16 +196,16 @@ gis = GIS(org_url, client_id=client_id, redirect_uri='urn:ietf:wg:oauth:2.0:oob'
 
 print("Sign in completed.")
 
-item_id = 'a0dc62673ce74a62b574444d4b6ee785'
-item = gis.content.get(item_id)
-feature_layer = item.layers[0]  # Assuming it's the first layer
+# item_id = '00e4733282ec4ac5968b7548ca9e2742'
+# item = gis.content.get(item_id)
+# feature_layer = item.layers[0]  # Assuming it's the first layer
 
-# Query the feature layer for records
-features = feature_layer.query(where="1=1", out_fields="*", return_attachments=False).features
+# # Query the feature layer for records
+# features = feature_layer.query(where="1=1", out_fields="*", return_attachments=False).features
 
 # Define base path for saving photos
-base_path = 'photos2'
-comp_path = 'photos2\\working'
+base_path = 'HEAT_Apr-Aug22v2'
+comp_path = 'HEAT_Apr-Aug22v2\\working'
 
 import tkinter as tk
 from tkinter import ttk
