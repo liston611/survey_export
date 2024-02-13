@@ -47,7 +47,16 @@ def download_and_rename_attachment(feature_layer, feature, attachment, base_path
         creation_date = pd.to_datetime(feature.attributes['CreationDate'], unit='ms')
         date_str = creation_date.strftime('%m%d%y-%H%M')
     wrkordr = str(feature.attributes['workorderid'])
+    if wrkordr == '':
+        wrkordr = 'BLANK'
     stop_abbr = str(feature.attributes['location'][:6])
+    if len(stop_abbr) == 6:
+        try:
+            int(stop_abbr)
+        except:
+            stop_abbr = 'OTHER_'
+    else:
+        stop_abbr = 'OTHER_'
     folder_path = os.path.join(base_path, stop_abbr)
     folder_path_comp = os.path.join(comp_path, stop_abbr)
     os.makedirs(folder_path, exist_ok=True)
@@ -68,7 +77,7 @@ def download_and_rename_attachment(feature_layer, feature, attachment, base_path
             print(f"Photo {file_name} saved at {folder_path}")
 
         # Save compressed
-        if not os.path.exists(file_path_comp):
+        if not os.path.exists(file_path_comp) and attachment_type in ['.jpg', '.jpeg', '.png', '.gif']:
             os.makedirs(folder_path_comp, exist_ok=True)
             compress_img(file_path, file_path_comp)
 
@@ -101,6 +110,8 @@ def delete_fullres(feature_layer, feature, attachment, base_path, comp_path):
         date_str = creation_date.strftime('%m%d%y-%H%M')
     date_str = creation_date.strftime('%m%d%y-%H%M')
     wrkordr = str(feature.attributes['workorderid'])
+    if wrkordr == '':
+        wrkordr = 'BLANK'
     stop_abbr = str(feature.attributes['location'][:6])
     folder_path = os.path.join(base_path, stop_abbr)
     folder_path_comp = os.path.join(comp_path, stop_abbr)
@@ -124,7 +135,6 @@ def delete_fullres(feature_layer, feature, attachment, base_path, comp_path):
 
 # Use ThreadPoolExecutor to download attachments in parallel
 def execute_download():
-    item_id = '00e4733282ec4ac5968b7548ca9e2742'
     item = gis.content.get(item_id)
     feature_layer = item.layers[0]  # Assuming it's the first layer
     # Query the feature layer for records
@@ -143,7 +153,6 @@ def execute_download():
 
 
 def execute_upload():
-    item_id = '00e4733282ec4ac5968b7548ca9e2742'
     item = gis.content.get(item_id)
     feature_layer = item.layers[0]  # Assuming it's the first layer
     # Query the feature layer for records
@@ -162,7 +171,6 @@ def execute_upload():
 
 
 def execute_delete():
-    item_id = '00e4733282ec4ac5968b7548ca9e2742'
     item = gis.content.get(item_id)
     feature_layer = item.layers[0]  # Assuming it's the first layer
     # Query the feature layer for records
@@ -196,12 +204,8 @@ gis = GIS(org_url, client_id=client_id, redirect_uri='urn:ietf:wg:oauth:2.0:oob'
 
 print("Sign in completed.")
 
-# item_id = '00e4733282ec4ac5968b7548ca9e2742'
-# item = gis.content.get(item_id)
-# feature_layer = item.layers[0]  # Assuming it's the first layer
+item_id = '983809a6ba004e3390955086fc109388'
 
-# # Query the feature layer for records
-# features = feature_layer.query(where="1=1", out_fields="*", return_attachments=False).features
 
 # Define base path for saving photos
 base_path = 'HEAT'
