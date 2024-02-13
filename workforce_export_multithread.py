@@ -7,8 +7,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 # Compress image
-def compress_img(folder_path, folder_path_comp, quality = 65):
-    image = Image.open(folder_path)
+def compress_img(file_path, file_path_comp, quality = 65):
+    image = Image.open(file_path)
 
     if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
@@ -33,9 +33,9 @@ def compress_img(folder_path, folder_path_comp, quality = 65):
     new_size = (width//2, height//2)
     resized_image = image.resize(new_size)
     
-    os.makedirs(folder_path_comp, exist_ok=True)
-    resized_image.save(folder_path_comp, quality = quality, optimize=True)
-    print(f"Compressed photo saved at {folder_path_comp}")
+    os.makedirs(file_path_comp, exist_ok=True)
+    resized_image.save(file_path_comp, quality = quality, optimize=True)
+    print(f"Compressed photo saved at {file_path_comp}")
 
 
 # for feature in features:
