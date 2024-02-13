@@ -33,7 +33,6 @@ def compress_img(file_path, file_path_comp, quality = 65):
     new_size = (width//2, height//2)
     resized_image = image.resize(new_size)
     
-    os.makedirs(file_path_comp, exist_ok=True)
     resized_image.save(file_path_comp, quality = quality, optimize=True)
     print(f"Compressed photo saved at {file_path_comp}")
 
@@ -70,6 +69,7 @@ def download_and_rename_attachment(feature_layer, feature, attachment, base_path
 
         # Save compressed
         if not os.path.exists(file_path_comp):
+            os.makedirs(folder_path_comp, exist_ok=True)
             compress_img(file_path, file_path_comp)
 
 
@@ -101,7 +101,7 @@ def delete_fullres(feature_layer, feature, attachment, base_path, comp_path):
         date_str = creation_date.strftime('%m%d%y-%H%M')
     date_str = creation_date.strftime('%m%d%y-%H%M')
     wrkordr = str(feature.attributes['workorderid'])
-    stop_abbr = str(feature.attributes['Abbr'])
+    stop_abbr = str(feature.attributes['location'][:6])
     folder_path = os.path.join(base_path, stop_abbr)
     folder_path_comp = os.path.join(comp_path, stop_abbr)
     os.makedirs(folder_path, exist_ok=True)
@@ -204,8 +204,8 @@ print("Sign in completed.")
 # features = feature_layer.query(where="1=1", out_fields="*", return_attachments=False).features
 
 # Define base path for saving photos
-base_path = 'HEAT_Apr-Aug22v2'
-comp_path = 'HEAT_Apr-Aug22v2\\working'
+base_path = 'HEAT'
+comp_path = 'HEAT\\working'
 
 import tkinter as tk
 from tkinter import ttk
