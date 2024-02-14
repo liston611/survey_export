@@ -44,7 +44,6 @@ def download_and_rename_attachment(feature_layer, feature, attachment, base_path
         creation_date = pd.to_datetime(feature.attributes['inprogressdate'], unit='ms')
     except:
         creation_date = pd.to_datetime(feature.attributes['inProgressDate'], unit='ms')
-    
     try:
         date_str = creation_date.strftime('%m%d%y-%H%M')
     except:
@@ -56,14 +55,11 @@ def download_and_rename_attachment(feature_layer, feature, attachment, base_path
         wrkordr = str(feature.attributes['workOrderId'])
     if wrkordr == '':
         wrkordr = 'BLANK'
-    stop_abbr = str(feature.attributes['location'][:6])
-    if len(stop_abbr) == 6:
-        try:
-            if len(str(int(stop_abbr))) != 6: stop_abbr = 'OTHER_'
-        except:
-            stop_abbr = 'OTHER_'
-    else:
+    try:
+        stop_abbr = str(re.search(r' (\d{6})[^0-9]',feature.attributes['description'])[1])
+    except:
         stop_abbr = 'OTHER_'
+
     folder_path = os.path.join(base_path, stop_abbr)
     folder_path_comp = os.path.join(comp_path, stop_abbr)
     os.makedirs(folder_path, exist_ok=True)
@@ -96,14 +92,11 @@ def upload_compressed(feature_layer, feature, comp_path):
     attachments = feature_layer.attachments.get_list(oid=object_id)
     attachments_names = [attachment['name'] for attachment in attachments]
 
-    stop_abbr = str(feature.attributes['location'][:6])
-    if len(stop_abbr) == 6:
-        try:
-            if len(str(int(stop_abbr))) != 6: stop_abbr = 'OTHER_'
-        except:
-            stop_abbr = 'OTHER_'
-    else:
+    try:
+        stop_abbr = str(re.search(r' (\d{6})[^0-9]',feature.attributes['description'])[1])
+    except:
         stop_abbr = 'OTHER_'
+
     file_path_comp = os.path.join(comp_path, stop_abbr)
 
     for dirpath, dirnames, filenames in os.walk(file_path_comp, topdown=False):
@@ -132,14 +125,12 @@ def delete_fullres(feature_layer, feature, attachment, base_path, comp_path):
         wrkordr = str(feature.attributes['workOrderId'])
     if wrkordr == '':
         wrkordr = 'BLANK'
-    stop_abbr = str(feature.attributes['location'][:6])
-    if len(stop_abbr) == 6:
-        try:
-            if len(str(int(stop_abbr))) != 6: stop_abbr = 'OTHER_'
-        except:
-            stop_abbr = 'OTHER_'
-    else:
+
+    try:
+        stop_abbr = str(re.search(r' (\d{6})[^0-9]',feature.attributes['description'])[1])
+    except:
         stop_abbr = 'OTHER_'
+
     folder_path = os.path.join(base_path, stop_abbr)
     folder_path_comp = os.path.join(comp_path, stop_abbr)
     os.makedirs(folder_path, exist_ok=True)
@@ -158,8 +149,7 @@ def delete_fullres(feature_layer, feature, attachment, base_path, comp_path):
             print(f"Photo {attachment_name} deleted")
         else:
             print(f"Bus Stop {stop_abbr} photo does not exist on drive: {os.path.exists(file_path)} or is different file size. Attachment size: {attachment['size']} Downloaded: {os.path.getsize(file_path)}")
-
-    
+            
 
 # Use ThreadPoolExecutor to download attachments in parallel
 def execute_download():
@@ -237,7 +227,6 @@ print("Sign in completed.")
 
 item_id = ''
 
-
 # Define base path for saving photos
 base_path = 'HEAT'
 comp_path = 'HEAT\\working'
@@ -258,7 +247,7 @@ item_id_label.pack(pady=(10,0))  # Adjust padding as needed
 # Create an Entry widget for item_id, initialized with default_item_id
 item_id_entry = ttk.Entry(root)
 item_id_entry.insert(0, item_id)  # Pre-fill the Entry with default_item_id
-item_id_entry.pack(fill = 'x', pady=5)
+item_id_entry.pack(pady=5)
 
 # Create and place the "Download" button
 download_button = ttk.Button(root, text="Download/Compress Photos", command=execute_download)
