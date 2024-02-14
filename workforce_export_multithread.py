@@ -36,7 +36,7 @@ def compress_img(file_path, file_path_comp, quality = 65):
     resized_image.save(file_path_comp, quality = quality, optimize=True)
     print(f"Compressed photo saved at {file_path_comp}")
 
-def gen_name(feature, attachment):
+def gen_name(feature, attachment = None):
     object_id = feature.attributes['OBJECTID']
     try:
         creation_date = pd.to_datetime(feature.attributes['inprogressdate'], unit='ms')
@@ -63,9 +63,13 @@ def gen_name(feature, attachment):
     else:
         stop_abbr = 'OTHER_'
 
-    attachment_id = attachment['id']
-    attachment_name = attachment['name']
-    _, attachment_type = os.path.splitext(attachment_name)
+    if attachment == None:
+        attachment_id = ''
+        attachment_type = ''
+    else:
+        attachment_id, attachment_name = attachment['id'], attachment['name']
+        _, attachment_type = os.path.splitext(attachment_name)
+    
     file_name = f"{stop_abbr}_{date_str}_{wrkordr}_OID{object_id}_{attachment_id}{attachment_type}"
     file_name_comp = f"{stop_abbr}_{date_str}_{wrkordr}_OID{object_id}_{attachment_id}_comp{attachment_type}"
 
@@ -100,23 +104,26 @@ def download_and_rename_attachment(feature_layer, feature, attachment, base_path
             compress_img(file_path, file_path_comp)
 
 
-def upload_compressed(feature_layer, feature, attachment, comp_path):
+def upload_compressed(feature_layer, feature, comp_path):
     # iterate features
     ## find feature OBJECTID
     object_id = feature.attributes['OBJECTID']
 
-    _, file_name_comp, stop_abbr = gen_name(feature, attachment)
+    file_name, _, stop_abbr = gen_name(feature)
 
-    attachments = feature_layer.attachments.get_list(oid=object_id)
-    attachments_names = [attachment['name'] for attachment in attachments]
+    try:
+        attachments = feature_layer.attachments.get_list(oid=object_id)
+        attachments_names = [attachment['name'] for attachment in attachments]
+    except:
+        attachments_names = ''
 
     file_path_comp = os.path.join(comp_path, stop_abbr)
 
     for _, _, filenames in os.walk(file_path_comp, topdown=False):
          for filename in filenames:
-             if (not filename in attachments_names) and filename == file_name_comp:
+             if (not filename in attachments_names) and file_name in filename:
                  feature_layer.attachments.add(oid=object_id, file_path = os.path.join(file_path_comp,filename))
-                 print(f"Photo {filename} uploaded at {file_path_comp}")
+                 print(f"Photo {filename} uploaded from {file_path_comp}")
 
 
 def delete_fullres(feature_layer, feature, attachment, base_path, mode = True):
@@ -189,10 +196,10 @@ def execute_upload():
     with ThreadPoolExecutor(max_workers=max_work) as executor:
         # Store future tasks
         future_to_attachment = {executor.submit(
-            upload_compressed, feature_layer, feature, attachment, 
-            comp_path): (feature, attachment)
-                                for feature in features for attachment in feature_layer.attachments.get_list(
-                                    oid=feature.attributes['OBJECTID'])}
+            upload_compressed, feature_layer, feature, 
+            comp_path): (feature)
+                                for feature in features
+                                }
         # Process completed futures
         for future in as_completed(future_to_attachment):
             future.result()  # You can handle exceptions here or get the result
