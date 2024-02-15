@@ -44,21 +44,20 @@ def compress_img(file_path, file_path_comp, quality = 65):
     print(f"Compressed photo saved at {file_path_comp}")
 
 def gen_name(feature, attachment = None):
-    object_id = feature.attributes['OBJECTID']
-    try:
-        creation_date = pd.to_datetime(feature.attributes['inprogressdate'], unit='ms')
-    except:
-        creation_date = pd.to_datetime(feature.attributes['inProgressDate'], unit='ms')
+    try: object_id = feature.attributes['objectid']
+    except: object_id = feature.attributes['OBJECTID']
     
-    try:
-        date_str = creation_date.strftime('%m%d%y-%H%M')
+    try: creation_date = pd.to_datetime(feature.attributes['inprogressdate'], unit='ms')
+    except: creation_date = pd.to_datetime(feature.attributes['inProgressDate'], unit='ms')
+    
+    try: date_str = creation_date.strftime('%m%d%y-%H%M')
     except:
         creation_date = pd.to_datetime(feature.attributes['CreationDate'], unit='ms')
         date_str = creation_date.strftime('%m%d%y-%H%M')
-    try:
-        wrkordr = str(feature.attributes['workorderid'])
-    except:
-        wrkordr = str(feature.attributes['workOrderId'])
+    
+    try: wrkordr = str(feature.attributes['workorderid'])
+    except: wrkordr = str(feature.attributes['workOrderId'])
+    
     if wrkordr == '':
         wrkordr = 'BLANK'
     
@@ -67,9 +66,7 @@ def gen_name(feature, attachment = None):
         stop_abbr = str(feature.attributes['location'][:6])
         if len(str(int(stop_abbr))) != 6:
             raise ValueError("Condition not met")
-        # else: raise ValueError("Condition not met")
     except:
-    # else:
         try:
             stop_abbr = str(re.search(r'[^0-9](\d{6})[^0-9]',feature.attributes['description'])[1])
         except: stop_abbr = 'OTHER_'
@@ -81,15 +78,18 @@ def gen_name(feature, attachment = None):
         attachment_id, attachment_name = attachment['id'], attachment['name']
         _, attachment_type = os.path.splitext(attachment_name)
     
-    file_name = f"{stop_abbr}_{date_str}_{wrkordr}_OID{object_id}_{attachment_id}{attachment_type}"
-    file_name_comp = f"{stop_abbr}_{date_str}_{wrkordr}_OID{object_id}_{attachment_id}_comp{attachment_type}"
+    file_base = f"{stop_abbr}_{date_str}_{wrkordr}_OID{object_id}_{attachment_id}
+    file_name = f"{file_base}{attachment_type}"
+    file_name_comp = f"{file_base}_comp{attachment_type}"
 
     return [file_name, file_name_comp, stop_abbr]
 
+
 # for feature in features:
 def download_and_rename_attachment(feature_layer, feature, attachment, base_path, comp_path):
-    object_id = feature.attributes['OBJECTID']
-    
+    try: object_id = feature.attributes['objectid']
+    except: object_id = feature.attributes['OBJECTID']
+
     file_name, file_name_comp, stop_abbr = gen_name(feature, attachment)
 
     folder_path = os.path.join(base_path, stop_abbr)
@@ -118,7 +118,8 @@ def download_and_rename_attachment(feature_layer, feature, attachment, base_path
 def upload_compressed(feature_layer, feature, comp_path):
     # iterate features
     ## find feature OBJECTID
-    object_id = feature.attributes['OBJECTID']
+    try: object_id = feature.attributes['objectid']
+    except: object_id = feature.attributes['OBJECTID']
 
     file_name, _, stop_abbr = gen_name(feature)
 
@@ -138,8 +139,9 @@ def upload_compressed(feature_layer, feature, comp_path):
 
 
 def delete_fullres(feature_layer, feature, attachment, base_path, mode = True):
-    object_id = feature.attributes['OBJECTID']
-    
+    try: object_id = feature.attributes['objectid']
+    except: object_id = feature.attributes['OBJECTID']
+
     file_name, _, stop_abbr = gen_name(feature, attachment)
 
     folder_path = os.path.join(base_path, stop_abbr)
@@ -156,22 +158,18 @@ def delete_fullres(feature_layer, feature, attachment, base_path, mode = True):
             if attachment['size'] == os.path.getsize(file_path):
                 feature_layer.attachments.delete(oid=object_id, attachment_id=attachment_id)
                 print(f"Photo {attachment_name} deleted")
-            else:
-                print(f"Bus Stop {file_str} is a different file size. Attachment size: {attachment['size']} Downloaded: {os.path.getsize(file_path)}")
-        else:
-            print(f"Bus Stop {file_str} photo does not exist on drive: {file_path}")
+            else: print(f"Bus Stop {file_str} is a different file size. Attachment size: {attachment['size']} Downloaded: {os.path.getsize(file_path)}")
+        else: print(f"Bus Stop {file_str} photo does not exist on drive: {file_path}")
     elif not mode:
         if os.path.exists(file_path):
             if attachment['size'] == os.path.getsize(file_path):
                 feature_layer.attachments.delete(oid=object_id, attachment_id=attachment_id)
                 print(f"Photo {attachment_name} deleted")
-            else:
-                print(f"Bus Stop {file_str} is a different file size. Attachment size: {attachment['size']} Downloaded: {os.path.getsize(file_path)}")
+            else: print(f"Bus Stop {file_str} is a different file size. Attachment size: {attachment['size']} Downloaded: {os.path.getsize(file_path)}")
         elif file_str[len(file_str)-5:] == '_comp':
             feature_layer.attachments.delete(oid=object_id, attachment_id=attachment_id)
             print(f"Photo {attachment_name} deleted")
-        else:
-            print(f"Bus Stop {file_str} photo does not exist on drive: {file_path}")
+        else: print(f"Bus Stop {file_str} photo does not exist on drive: {file_path}")
     
 
 # Use ThreadPoolExecutor to download attachments in parallel
@@ -221,7 +219,6 @@ def execute_upload():
 
 
 def execute_delete(mode = True):
-    # abbrLoc = bool_var.get()
     item_id = item_id_entry.get()
     item = gis.content.get(item_id)
     feature_layer = item.layers[0]  # Assuming it's the first layer
