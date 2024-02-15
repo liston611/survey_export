@@ -5,6 +5,13 @@ import pandas as pd
 from PIL import Image, ExifTags
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+## TYPE THE FOLDER DIRECTORY BELOW WHERE YOU WOULD LIKE TO BACK UP FILES!!!!
+#  Define base path for saving photos
+
+base_path = 'HEAT'
+comp_path = 'HEAT\\working'
+
+
 
 # Compress image
 def compress_img(file_path, file_path_comp, quality = 65):
@@ -36,7 +43,7 @@ def compress_img(file_path, file_path_comp, quality = 65):
     resized_image.save(file_path_comp, quality = quality, optimize=True)
     print(f"Compressed photo saved at {file_path_comp}")
 
-def gen_name(feature, attachment = None, abbrLoc=True):
+def gen_name(feature, attachment = None):
     object_id = feature.attributes['OBJECTID']
     try:
         creation_date = pd.to_datetime(feature.attributes['inprogressdate'], unit='ms')
@@ -55,20 +62,17 @@ def gen_name(feature, attachment = None, abbrLoc=True):
     if wrkordr == '':
         wrkordr = 'BLANK'
     
-    if abbrLoc:
+    # if abbrLoc:
+    try:
         stop_abbr = str(feature.attributes['location'][:6])
-        if len(stop_abbr) == 6:
-            try:
-                if len(str(int(stop_abbr))) != 6: stop_abbr = 'OTHER_'
-            except:
-                stop_abbr = 'OTHER_'
-        else:
-            stop_abbr = 'OTHER_'
-    else:
+        if len(str(int(stop_abbr))) != 6:
+            raise ValueError("Condition not met")
+        # else: raise ValueError("Condition not met")
+    except:
+    # else:
         try:
-            stop_abbr = str(re.search(r' (\d{6})[^0-9]',feature.attributes['description'])[1])
-        except:
-            stop_abbr = 'OTHER_'
+            stop_abbr = str(re.search(r'[^0-9](\d{6})[^0-9]',feature.attributes['description'])[1])
+        except: stop_abbr = 'OTHER_'
 
     if attachment == None:
         attachment_id = ''
@@ -83,10 +87,10 @@ def gen_name(feature, attachment = None, abbrLoc=True):
     return [file_name, file_name_comp, stop_abbr]
 
 # for feature in features:
-def download_and_rename_attachment(feature_layer, feature, attachment, base_path, comp_path, abbrLoc):
+def download_and_rename_attachment(feature_layer, feature, attachment, base_path, comp_path):
     object_id = feature.attributes['OBJECTID']
     
-    file_name, file_name_comp, stop_abbr = gen_name(feature, attachment, abbrLoc)
+    file_name, file_name_comp, stop_abbr = gen_name(feature, attachment)
 
     folder_path = os.path.join(base_path, stop_abbr)
     folder_path_comp = os.path.join(comp_path, stop_abbr)
@@ -111,12 +115,12 @@ def download_and_rename_attachment(feature_layer, feature, attachment, base_path
             compress_img(file_path, file_path_comp)
 
 
-def upload_compressed(feature_layer, feature, comp_path, abbrLoc):
+def upload_compressed(feature_layer, feature, comp_path):
     # iterate features
     ## find feature OBJECTID
     object_id = feature.attributes['OBJECTID']
 
-    file_name, _, stop_abbr = gen_name(feature, abbrLoc=abbrLoc)
+    file_name, _, stop_abbr = gen_name(feature)
 
     try:
         attachments = feature_layer.attachments.get_list(oid=object_id)
@@ -133,10 +137,10 @@ def upload_compressed(feature_layer, feature, comp_path, abbrLoc):
                  print(f"Photo {filename} uploaded from {file_path_comp}")
 
 
-def delete_fullres(feature_layer, feature, attachment, base_path, abbrLoc, mode = True):
+def delete_fullres(feature_layer, feature, attachment, base_path, mode = True):
     object_id = feature.attributes['OBJECTID']
     
-    file_name, _, stop_abbr = gen_name(feature, attachment, abbrLoc)
+    file_name, _, stop_abbr = gen_name(feature, attachment)
 
     folder_path = os.path.join(base_path, stop_abbr)
     os.makedirs(folder_path, exist_ok=True)
@@ -172,7 +176,7 @@ def delete_fullres(feature_layer, feature, attachment, base_path, abbrLoc, mode 
 
 # Use ThreadPoolExecutor to download attachments in parallel
 def execute_download():
-    abbrLoc = bool_var.get()
+    # abbrLoc = bool_var.get()
     item_id = item_id_entry.get()
     item = gis.content.get(item_id)
     feature_layer = item.layers[0]  # Assuming it's the first layer
@@ -184,7 +188,7 @@ def execute_download():
         # Store future tasks
         future_to_attachment = {executor.submit(
             download_and_rename_attachment, feature_layer, feature, attachment, 
-            base_path, comp_path, abbrLoc): (feature, attachment)
+            base_path, comp_path): (feature, attachment)
                                 for feature in features for attachment in feature_layer.attachments.get_list(
                                     oid=feature.attributes['OBJECTID'])}
         # Process completed futures
@@ -194,8 +198,9 @@ def execute_download():
 
 
 def execute_upload():
-    abbrLoc = bool_var.get()
+    # abbrLoc = bool_var.get()
     item_id = item_id_entry.get()
+    print(item_id)
     item = gis.content.get(item_id)
     feature_layer = item.layers[0]  # Assuming it's the first layer
     # Query the feature layer for records
@@ -206,7 +211,7 @@ def execute_upload():
         # Store future tasks
         future_to_attachment = {executor.submit(
             upload_compressed, feature_layer, feature, 
-            comp_path, abbrLoc): (feature)
+            comp_path): (feature)
                                 for feature in features
                                 }
         # Process completed futures
@@ -216,7 +221,7 @@ def execute_upload():
 
 
 def execute_delete(mode = True):
-    abbrLoc = bool_var.get()
+    # abbrLoc = bool_var.get()
     item_id = item_id_entry.get()
     item = gis.content.get(item_id)
     feature_layer = item.layers[0]  # Assuming it's the first layer
@@ -228,7 +233,7 @@ def execute_delete(mode = True):
         # Store future tasks
         future_to_attachment = {executor.submit(
             delete_fullres, feature_layer, feature, attachment, 
-            base_path, abbrLoc, mode): (feature, attachment)
+            base_path, mode): (feature, attachment)
                                 for feature in features for attachment in feature_layer.attachments.get_list(
                                     oid=feature.attributes['OBJECTID'])}
         # Process completed futures
@@ -258,10 +263,6 @@ print("Sign in completed.")
 
 max_work = 10
 
-# Define base path for saving photos
-base_path = 'HEAT'
-comp_path = 'HEAT\\working'
-
 import tkinter as tk
 from tkinter import ttk
 
@@ -280,58 +281,44 @@ def on_focusout(event):
 
 # Initialize the main window
 root = tk.Tk()
-root.title("ArcGIS Operations")
+root.title("ArcGIS Backup Tool")
 
 # Set the window size
-root.geometry('300x325')
+root.geometry('280x250')
 
 placeholder_text = 'Enter layer ID:'
 
 # Create an Entry widget for item_id, initialized with item_id
-item_id_entry = ttk.Entry(root, width=50)
+item_id_entry = ttk.Entry(root, width=40)
 item_id_entry.insert(0, placeholder_text)
 item_id_entry.config(foreground='grey')
 item_id_entry.bind("<FocusIn>", on_entry_click)
 item_id_entry.bind("<FocusOut>", on_focusout)
 item_id_entry.grid(row=0,column=0, columnspan=2, pady=10, padx=10)
 
-radio_label = ttk.Label(root, text="Abbr Column:")
-radio_label.grid(row=1, column=0, pady=(10,0), rowspan=2)  # Adjust padding as needed
-
-# Create a BooleanVar to store the True/False value
-bool_var = tk.BooleanVar()
-bool_var.set(True)  # You can set a default value as True or False
-
-# Create Radio buttons for True/False selection
-radio_true = ttk.Radiobutton(root, text="Location", variable=bool_var, value=True)
-radio_true.grid(row=1, column=1, sticky=tk.W)
-
-radio_false = ttk.Radiobutton(root, text="Description", variable=bool_var, value=False)
-radio_false.grid(row=2, column=1, sticky=tk.W)
-
 workers_label = ttk.Label(root, text="Max Workers:")
-workers_label.grid(row=3, column=0, pady=(10,0))  # Adjust padding as needed
+workers_label.grid(row=1, column=0, pady=(10,0))  # Adjust padding as needed
 
 # Create an Entry widget for max_work, initialized with max_work
 workers_entry = ttk.Entry(root)
 workers_entry.insert(0, max_work)  # Pre-fill the Entry with max_work
-workers_entry.grid(row=3, column=1,pady=5)
+workers_entry.grid(row=1, column=1,pady=5)
 
 # Create and place the "Download" button
 download_button = ttk.Button(root, text="Download/Compress Pics", command=execute_download)
-download_button.grid(row=4, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
+download_button.grid(row=2, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Create and place the "Upload" button
 upload_button = ttk.Button(root, text="Upload Compressed Pics", command=execute_upload)
-upload_button.grid(row=5, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
+upload_button.grid(row=3, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Create and place the "Delete" button
 delete_button = ttk.Button(root, text="Safe Delete Full-Res (leave compressed)", command=execute_delete)
-delete_button.grid(row=6, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
+delete_button.grid(row=4, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Create and place the "Delete All" button
 delete_all_button = ttk.Button(root, text="Safe Delete All Hosted (including compressed)", command=execute_delete_all)
-delete_all_button.grid(row=7, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
+delete_all_button.grid(row=5, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Start the GUI event loop
 root.mainloop()
