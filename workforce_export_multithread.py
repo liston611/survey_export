@@ -5,6 +5,13 @@ import pandas as pd
 from PIL import Image, ExifTags
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+## TYPE THE FOLDER DIRECTORY BELOW WHERE YOU WOULD LIKE TO BACK UP FILES!!!!
+#  Define base path for saving photos
+
+base_path = 'HEAT'
+comp_path = 'HEAT\\working'
+
+
 
 # Compress image
 def compress_img(file_path, file_path_comp, quality = 65):
@@ -58,11 +65,9 @@ def gen_name(feature, attachment = None):
     # if abbrLoc:
     try:
         stop_abbr = str(feature.attributes['location'][:6])
-        if len(stop_abbr) == 6:
-            try:
-                if len(str(int(stop_abbr))) != 6: stop_abbr = 'OTHER_'
-            except: stop_abbr = 'OTHER_'
-        else: stop_abbr = 'OTHER_'
+        if len(str(int(stop_abbr))) != 6:
+            raise ValueError("Condition not met")
+        # else: raise ValueError("Condition not met")
     except:
     # else:
         try:
@@ -195,6 +200,7 @@ def execute_download():
 def execute_upload():
     # abbrLoc = bool_var.get()
     item_id = item_id_entry.get()
+    print(item_id)
     item = gis.content.get(item_id)
     feature_layer = item.layers[0]  # Assuming it's the first layer
     # Query the feature layer for records
@@ -257,10 +263,6 @@ print("Sign in completed.")
 
 max_work = 10
 
-# Define base path for saving photos
-base_path = 'HEAT'
-comp_path = 'HEAT\\working'
-
 import tkinter as tk
 from tkinter import ttk
 
@@ -279,58 +281,44 @@ def on_focusout(event):
 
 # Initialize the main window
 root = tk.Tk()
-root.title("ArcGIS Operations")
+root.title("ArcGIS Backup Tool")
 
 # Set the window size
-root.geometry('300x325')
+root.geometry('280x250')
 
 placeholder_text = 'Enter layer ID:'
 
 # Create an Entry widget for item_id, initialized with item_id
-item_id_entry = ttk.Entry(root, width=50)
+item_id_entry = ttk.Entry(root, width=40)
 item_id_entry.insert(0, placeholder_text)
 item_id_entry.config(foreground='grey')
 item_id_entry.bind("<FocusIn>", on_entry_click)
 item_id_entry.bind("<FocusOut>", on_focusout)
 item_id_entry.grid(row=0,column=0, columnspan=2, pady=10, padx=10)
 
-# radio_label = ttk.Label(root, text="Abbr Column:")
-# radio_label.grid(row=1, column=0, pady=(10,0), rowspan=2)  # Adjust padding as needed
-
-# # Create a BooleanVar to store the True/False value
-# bool_var = tk.BooleanVar()
-# bool_var.set(True)  # You can set a default value as True or False
-
-# Create Radio buttons for True/False selection
-# radio_true = ttk.Radiobutton(root, text="Location", variable=bool_var, value=True)
-# radio_true.grid(row=1, column=1, sticky=tk.W)
-
-# radio_false = ttk.Radiobutton(root, text="Description", variable=bool_var, value=False)
-# radio_false.grid(row=2, column=1, sticky=tk.W)
-
 workers_label = ttk.Label(root, text="Max Workers:")
-workers_label.grid(row=3, column=0, pady=(10,0))  # Adjust padding as needed
+workers_label.grid(row=1, column=0, pady=(10,0))  # Adjust padding as needed
 
 # Create an Entry widget for max_work, initialized with max_work
 workers_entry = ttk.Entry(root)
 workers_entry.insert(0, max_work)  # Pre-fill the Entry with max_work
-workers_entry.grid(row=3, column=1,pady=5)
+workers_entry.grid(row=1, column=1,pady=5)
 
 # Create and place the "Download" button
 download_button = ttk.Button(root, text="Download/Compress Pics", command=execute_download)
-download_button.grid(row=4, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
+download_button.grid(row=2, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Create and place the "Upload" button
 upload_button = ttk.Button(root, text="Upload Compressed Pics", command=execute_upload)
-upload_button.grid(row=5, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
+upload_button.grid(row=3, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Create and place the "Delete" button
 delete_button = ttk.Button(root, text="Safe Delete Full-Res (leave compressed)", command=execute_delete)
-delete_button.grid(row=6, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
+delete_button.grid(row=4, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Create and place the "Delete All" button
 delete_all_button = ttk.Button(root, text="Safe Delete All Hosted (including compressed)", command=execute_delete_all)
-delete_all_button.grid(row=7, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
+delete_all_button.grid(row=5, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Start the GUI event loop
 root.mainloop()
