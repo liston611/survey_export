@@ -50,7 +50,7 @@ def ini_delete():
     execute_delete(item, base_path, max_work)
 
 
-def ini_deleteAll():
+def ini_delete_all():
     item_id = item_id_entry.get()
     item = gis.content.get(item_id)
     base_path = path_entry.get()
@@ -76,6 +76,7 @@ def on_focusout(event):
 def browse_directory():
     directory = filedialog.askdirectory()
     if directory:  # If the user didn't cancel the dialog
+        directory = directory.replace('/', '\\')
         path_entry.delete(0, tk.END)
         path_entry.insert(0, directory)
 
@@ -86,7 +87,7 @@ root = tk.Tk()
 root.title("ArcGIS Backup Tool")
 
 # Set the window size
-root.geometry('280x250')
+root.geometry('320x250')
 
 placeholder_text = 'Enter layer ID:'
 
@@ -103,7 +104,6 @@ path_label.grid(row=1, column=0, pady=(10,0))  # Adjust padding as needed
 
 # Create an Entry widget for max_work, initialized with max_work
 path_entry = ttk.Entry(root)
-path_entry.insert(0, max_work)  # Pre-fill the Entry with max_work
 path_entry.grid(row=1, column=1,pady=5)
 
 # Browse Button
@@ -119,19 +119,19 @@ workers_entry.insert(0, max_work)  # Pre-fill the Entry with max_work
 workers_entry.grid(row=2, column=1,pady=5)
 
 # Create and place the "Download" button
-download_button = ttk.Button(root, text="Download/Compress Pics", command=execute_download)
+download_button = ttk.Button(root, text="Download/Compress Pics", command=ini_download)
 download_button.grid(row=3, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Create and place the "Upload" button
-upload_button = ttk.Button(root, text="Upload Compressed Pics", command=execute_upload)
+upload_button = ttk.Button(root, text="Upload Compressed Pics", command=ini_upload)
 upload_button.grid(row=4, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Create and place the "Delete" button
-delete_button = ttk.Button(root, text="Safe Delete Full-Res (leave compressed)", command=execute_delete)
+delete_button = ttk.Button(root, text="Safe Delete Full-Res (leave compressed)", command=ini_delete)
 delete_button.grid(row=5, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Create and place the "Delete All" button
-delete_all_button = ttk.Button(root, text="Safe Delete All Hosted (including compressed)", command=execute_delete_all)
+delete_all_button = ttk.Button(root, text="Safe Delete All Hosted (including compressed)", command=ini_delete_all)
 delete_all_button.grid(row=6, column=0, columnspan= 2, pady=(10,0))  # Add some vertical padding
 
 # Start the GUI event loop

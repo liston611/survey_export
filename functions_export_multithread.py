@@ -1,15 +1,8 @@
-from arcgis.gis import GIS
 import re
 import os
 import pandas as pd
 from PIL import Image, ExifTags
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
-## TYPE THE FOLDER DIRECTORY BELOW WHERE YOU WOULD LIKE TO BACK UP FILES!!!!
-#  Define base path for saving photos
-
-base_path = 'HEAT'
-comp_path = 'HEAT\\working'
 
 
 
@@ -173,7 +166,7 @@ def delete_fullres(feature_layer, feature, attachment, base_path, mode = True):
     
 
 # Use ThreadPoolExecutor to download attachments in parallel
-def execute_download(item, max_work):
+def execute_download(item, base_path, comp_path, max_work):
     feature_layer = item.layers[0]  # Assuming it's the first layer
     # Query the feature layer for records
     features = feature_layer.query(where="1=1", out_fields="*", return_attachments=False).features
@@ -191,7 +184,7 @@ def execute_download(item, max_work):
     print('Download/Compress Complete')
 
 
-def execute_upload(item, max_work):
+def execute_upload(item, comp_path, max_work):
     feature_layer = item.layers[0]  # Assuming it's the first layer
     # Query the feature layer for records
     features = feature_layer.query(where="1=1", out_fields="*", return_attachments=False).features
@@ -209,7 +202,7 @@ def execute_upload(item, max_work):
     print('Upload Complete')
 
 
-def execute_delete(item, max_work, mode = True):
+def execute_delete(item, base_path, max_work, mode = True):
     feature_layer = item.layers[0]  # Assuming it's the first layer
     # Query the feature layer for records
     features = feature_layer.query(where="1=1", out_fields="*", return_attachments=False).features
@@ -226,5 +219,5 @@ def execute_delete(item, max_work, mode = True):
             future.result()  # You can handle exceptions here or get the result
     print('Deletion Complete')
 
-def execute_delete_all(item, max_work):
-    execute_delete(item, max_work, mode=False)
+def execute_delete_all(item, base_path, max_work):
+    execute_delete(item, base_path, max_work, mode=False)
