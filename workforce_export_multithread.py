@@ -61,7 +61,6 @@ def gen_name(feature, attachment = None):
     if wrkordr == '':
         wrkordr = 'BLANK'
     
-    # if abbrLoc:
     try:
         stop_abbr = str(feature.attributes['location'][:6])
         if len(str(int(stop_abbr))) != 6:
@@ -175,7 +174,6 @@ def delete_fullres(feature_layer, feature, attachment, base_path, mode = True):
 
 # Use ThreadPoolExecutor to download attachments in parallel
 def execute_download():
-    # abbrLoc = bool_var.get()
     item_id = item_id_entry.get()
     item = gis.content.get(item_id)
     feature_layer = item.layers[0]  # Assuming it's the first layer
@@ -197,7 +195,6 @@ def execute_download():
 
 
 def execute_upload():
-    # abbrLoc = bool_var.get()
     item_id = item_id_entry.get()
     print(item_id)
     item = gis.content.get(item_id)
