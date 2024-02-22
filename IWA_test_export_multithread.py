@@ -233,7 +233,8 @@ org_url = 'https://martaonline.maps.arcgis.com'
 
 # Get the OAuth token
 print("Opening browser to obtain an OAuth token...")
-gis = GIS(org_url, client_id=client_id, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+# gis = GIS(org_url, client_id=client_id, redirect_uri='urn:ietf:wg:oauth:2.0:oob', auth_mode='IWA')
+gis = GIS(org_url, auth_mode='IWA')
 
 print("Sign in completed.")
 
