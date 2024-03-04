@@ -87,7 +87,7 @@ root = tk.Tk()
 root.title("ArcGIS Backup Tool")
 
 # Set the window size
-root.geometry('320x250')
+root.geometry('350x250')
 
 placeholder_text = 'Enter layer ID:'
 
@@ -97,7 +97,7 @@ item_id_entry.insert(0, placeholder_text)
 item_id_entry.config(foreground='grey')
 item_id_entry.bind("<FocusIn>", on_entry_click)
 item_id_entry.bind("<FocusOut>", on_focusout)
-item_id_entry.grid(row=0,column=0, columnspan=2, pady=10, padx=10)
+item_id_entry.grid(row=0,column=0, columnspan=3, pady=10, padx=10)
 
 path_label = ttk.Label(root, text="Enter Folder:")
 path_label.grid(row=1, column=0, pady=(10,0))  # Adjust padding as needed

@@ -85,38 +85,41 @@ def upload_compressed(feature, comp_path):
              file_oid = int(re.search(r"_OID(\d{1,4})-", filename)[1])
              if (not filename in attachments_names) and file_oid == object_id:
                  feature_layer.attachments.add(oid=object_id, file_path = os.path.join(file_path_comp,filename))
-                 print(f"Photo {filename} uploaded at {file_path_comp}")
+                 print(f"Photo {filename} uploaded from {file_path_comp}")
 
 
 def delete_fullres(feature, attachment, base_path, comp_path):
-    object_id = feature.attributes['objectid']
-    creation_date = pd.to_datetime(feature.attributes['CreationDate'], unit='ms')
-    date_str = creation_date.strftime('%m%d%y-%H%M')
-    bus_route = str(feature.attributes['bus_route'])
-    stop_abbr = str(feature.attributes['Abbr'])
-    folder_path = os.path.join(base_path, bus_route, stop_abbr)
-    folder_path_comp = os.path.join(comp_path, bus_route, stop_abbr)
-    os.makedirs(folder_path, exist_ok=True)
-    os.makedirs(folder_path_comp, exist_ok=True)
 
-    attachment_id = attachment['id']
-    attachment_name = attachment['name']
+    attachment_name = attachment['name']    
     file_str, attachment_type = os.path.splitext(attachment_name)
-    file_name = f"{stop_abbr}_{date_str}_OID{object_id}-{attachment_id}{attachment_type}"
-    file_path = os.path.join(folder_path, file_name)
     
     # Delete the attachment
     if not file_str[len(file_str)-5:] == '_comp':
-        if os.path.exists(file_path) and attachment['size'] == os.path.getsize(file_path):
-            feature_layer.attachments.delete(oid=object_id, attachment_id=attachment_id)
-            print(f"Photo {attachment_name} deleted")
-        else:
-            print(f"Bus Stop {stop_abbr} photo does not exist on drive or is different file size. Attachment size: {attachment['size']} Downloaded: {os.path.getsize(file_path)}")
-            
+
+        bus_route = str(feature.attributes['bus_route'])
+        stop_abbr = str(feature.attributes['Abbr'])
+        attachment_id = attachment['id']
+        object_id = feature.attributes['objectid']
+        creation_date = pd.to_datetime(feature.attributes['CreationDate'], unit='ms')
+        date_str = creation_date.strftime('%m%d%y-%H%M')
+        folder_path = os.path.join(base_path, bus_route, stop_abbr)
+        folder_path_comp = os.path.join(comp_path, bus_route, stop_abbr)
+        file_name = f"{stop_abbr}_{date_str}_OID{object_id}-{attachment_id}{attachment_type}"
+        file_path = os.path.join(folder_path, file_name)
+        os.makedirs(folder_path, exist_ok=True)
+        os.makedirs(folder_path_comp, exist_ok=True)
+
+        if os.path.exists(file_path):
+            if attachment['size'] == os.path.getsize(file_path):
+                feature_layer.attachments.delete(oid=object_id, attachment_id=attachment_id)
+                print(f"Photo {attachment_name} deleted")
+            else: print(f"Bus Stop {file_str} is a different file size. Attachment size: {attachment['size']} Downloaded: {os.path.getsize(file_path)}")
+        else: print(f"Bus Stop {file_str} photo does not exist on drive: {file_path}")
+          
 
 # Use ThreadPoolExecutor to download attachments in parallel
 def execute_download():
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=36) as executor:
         # Store future tasks
         future_to_attachment = {executor.submit(
             download_and_rename_attachment, feature, attachment, 
@@ -129,7 +132,7 @@ def execute_download():
 
 
 def execute_upload():
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=36) as executor:
         # Store future tasks
         future_to_attachment = {executor.submit(
             upload_compressed, feature, 
@@ -142,7 +145,7 @@ def execute_upload():
 
 
 def execute_delete():
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=12) as executor:
         # Store future tasks
         future_to_attachment = {executor.submit(
             delete_fullres, feature, attachment, 
