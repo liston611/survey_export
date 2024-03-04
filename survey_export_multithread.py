@@ -178,8 +178,8 @@ feature_layer = item.layers[0]  # Assuming it's the first layer
 features = feature_layer.query(where="1=1", out_fields="*", return_attachments=False).features
 
 # Define base path for saving photos
-base_path = 'photos2'
-comp_path = 'photos2\\working'
+base_path = 'BSRU'
+comp_path = 'BSRU\\working'
 
 import tkinter as tk
 from tkinter import ttk

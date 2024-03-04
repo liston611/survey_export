@@ -229,14 +229,14 @@ config.read('config.ini')
 client_id = config['DEFAULT']['CLIENT_ID']
 
 # The URL of your ArcGIS Online organization
-org_url = 'https://martaonline.maps.arcgis.com'
+# org_url = 'https://martaonline.maps.arcgis.com'
+org_url = 'https://martagistest.itsmarta.com/portaltest'
 
 # Get the OAuth token
 print("Opening browser to obtain an OAuth token...")
 # gis = GIS(org_url, client_id=client_id, redirect_uri='urn:ietf:wg:oauth:2.0:oob', auth_mode='IWA')
-gis = GIS(org_url, auth_mode='IWA')
-
-print("Sign in completed.")
+gis = GIS(org_url)
+print("Logged in as " + str(gis.properties))
 
 max_work = 10
 
