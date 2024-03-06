@@ -1,5 +1,5 @@
 from arcgis.gis import GIS
-from functions_export_multithread import execute_download, execute_upload, execute_delete, execute_delete_all
+from functions_export_multithread_copy import execute_download, execute_upload, execute_delete, execute_delete_all
 
 
 
@@ -16,10 +16,10 @@ org_url = 'https://martaonline.maps.arcgis.com'
 # Get the OAuth token
 print("Opening browser to obtain an OAuth token...")
 gis = GIS(org_url, client_id=client_id, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+
 print("Sign in completed.")
 
-max_work = 15 #default value to populate
-
+max_work = 10
 
 import tkinter as tk
 from tkinter import ttk, filedialog
@@ -58,14 +58,16 @@ def ini_delete_all():
     execute_delete_all(item, base_path, max_work)
 
 
-def on_entry_click(event): #Function to be called when the entry is clicked
+def on_entry_click(event):
+    """Function to be called when the entry is clicked."""
     if item_id_entry.get() == placeholder_text:
         item_id_entry.delete(0, "end")  # Delete all the text in the entry
         item_id_entry.insert(0, '')  # Insert blank for user input
         item_id_entry.config(foreground='black')
 
 
-def on_focusout(event): # Function to be called when the entry loses focus
+def on_focusout(event):
+    """Function to be called when the entry loses focus."""
     if item_id_entry.get() == '':
         item_id_entry.insert(0, placeholder_text)
         item_id_entry.config(foreground='grey')

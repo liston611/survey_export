@@ -25,7 +25,9 @@ def compress_img(file_path, file_path_comp, quality = 65):
             image = image.rotate(270, expand=True)
         elif exif[orientation] == 8:
             image = image.rotate(90, expand=True)
-    except (AttributeError, KeyError, IndexError): pass # Cases: image doesn't have getexif
+    except (AttributeError, KeyError, IndexError):
+        # Cases: image doesn't have getexif
+        pass
 
     width, height = image.size
     new_size = (width//2, height//2)
@@ -38,22 +40,24 @@ def gen_name(feature, attachment = None):
     try: object_id = feature.attributes['objectid']
     except: object_id = feature.attributes['OBJECTID']
     
-    try: creation_date = pd.to_datetime(feature.attributes['inprogressdate'], unit='ms')
-    except: creation_date = pd.to_datetime(feature.attributes['inProgressDate'], unit='ms')
+    # try: creation_date = pd.to_datetime(feature.attributes['EditDate_1'], unit='ms')
+    # except: creation_date = pd.to_datetime(feature.attributes['inProgressDate'], unit='ms')
     
-    try: date_str = creation_date.strftime('%m%d%y-%H%M')
-    except:
-        creation_date = pd.to_datetime(feature.attributes['CreationDate'], unit='ms')
-        date_str = creation_date.strftime('%m%d%y-%H%M')
+    # try: date_str = creation_date.strftime('%m%d%y-%H%M')
+    # except:
+    #     creation_date = pd.to_datetime(feature.attributes['CreationDate'], unit='ms')
+    #     date_str = creation_date.strftime('%m%d%y-%H%M')
+    date_str = '000000-0000'
     
-    try: wrkordr = str(feature.attributes['workorderid'])
-    except: wrkordr = str(feature.attributes['workOrderId'])
+    try: wrkordr = str(feature.attributes['HEAT'])
+    except: #wrkordr = str(feature.attributes['workOrderId'])
+        wrkordr = "RooseveltHwy"
     
     if wrkordr == '':
         wrkordr = 'BLANK'
     
     try:
-        stop_abbr = str(feature.attributes['location'])[:6]
+        stop_abbr = str(feature.attributes['StopAbbr_1'])[:6]
         if len(str(int(stop_abbr))) != 6:
             raise ValueError("Condition not met")
     except:
