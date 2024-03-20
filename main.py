@@ -1,6 +1,6 @@
 from arcgis.gis import GIS
 from functions_export_multithread import execute_download, execute_upload, execute_delete, execute_delete_all
-
+import os
 
 
 # client ID from the registered application
@@ -72,7 +72,8 @@ def on_focusout(event): # Function to be called when the entry loses focus
 
 
 def browse_directory():
-    directory = filedialog.askdirectory()
+    initial_dir = os.path.dirname(os.path.realpath(__file__))  # Get the script's directory
+    directory = filedialog.askdirectory(initialdir=initial_dir)  # Set the initial directory
     if directory:  # If the user didn't cancel the dialog
         directory = directory.replace('/', '\\')
         path_entry.delete(0, tk.END)
@@ -100,7 +101,7 @@ item_id_entry.grid(row=0,column=0, columnspan=3, pady=10, padx=10)
 path_label = ttk.Label(root, text="Enter Folder:")
 path_label.grid(row=1, column=0, pady=(10,0))  # Adjust padding as needed
 
-# Create an Entry widget for max_work, initialized with max_work
+# Create an Entry widget for folder directory
 path_entry = ttk.Entry(root)
 path_entry.grid(row=1, column=1,pady=5)
 
