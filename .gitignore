@@ -9,3 +9,4 @@ main.bat
 *_copy.py
 *.csv
 __pycache__
+*.lnk
