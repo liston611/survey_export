@@ -8,3 +8,4 @@ config.ini
 main.bat
 *_copy.py
 *.csv
+__pycache__
