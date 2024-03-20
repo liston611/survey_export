@@ -1,6 +1,6 @@
 # survey_export tool
 
-## Files\
+## Files
 **1. main.py**\
 Creates GUI that calls functions from functions_export_multithread.py\
 **2. functions_export_multithread.py**\
