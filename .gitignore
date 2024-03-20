@@ -7,3 +7,4 @@ amenities/
 config.ini
 main.bat
 *_copy.py
+*.csv
