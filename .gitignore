@@ -6,4 +6,4 @@ venv/
 amenities/
 config.ini
 main.bat
-*_copy.
+*_copy.py
