@@ -1,5 +1,8 @@
 # survey_export tool
 
+## Description
+survey_export is a project used to query, organize, backup, compress, syncronize, and clean remote data attachements in AGOL.
+
 ## Files
 **1. main.py**\
 Creates GUI that calls functions from functions_export_multithread.py\
