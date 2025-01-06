@@ -8,5 +8,8 @@ config.ini
 main.bat
 *_copy.py
 *.csv
+*.crt
 __pycache__
 *.lnk
+aminity_export_multithread.py
+survey_export_multithread.py

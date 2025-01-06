@@ -1,6 +1,7 @@
 from arcgis.gis import GIS
-import re
 import os
+import certifi
+import urllib3
 import pandas as pd
 from PIL import Image, ExifTags
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -227,14 +228,15 @@ from configparser import ConfigParser
 config = ConfigParser()
 config.read('config.ini')
 client_id = config['DEFAULT']['CLIENT_ID']
+client_secret = config['DEFAULT']['CLIENT_SECRET']
 
 # The URL of your ArcGIS Online organization
 org_url = 'https://martaonline.maps.arcgis.com'
 
 # Get the OAuth token
-print("Opening browser to obtain an OAuth token...")
-gis = GIS(org_url, client_id=client_id, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
-
+# print("Opening browser to obtain an OAuth token...")
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+gis = GIS(org_url, client_id=client_id, client_secret=client_secret, verify_cert=certifi.where())
 print("Sign in completed.")
 
 max_work = 10
