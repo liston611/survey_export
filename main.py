@@ -1,12 +1,17 @@
 from arcgis.gis import GIS
 from functions_export_multithread import execute_download, execute_upload, execute_delete, execute_delete_all
 import os
+import requests
+from configparser import ConfigParser
+import certifi
 import urllib3
 
+http = urllib3.PoolManager(
+    cert_reqs="CERT_REQUIRED",
+    ca_certs=certifi.where()
+)
 
-# client ID from the registered application
-from configparser import ConfigParser
-
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 config = ConfigParser()
 config.read('config.ini')
 client_id = config['DEFAULT']['CLIENT_ID']
@@ -15,11 +20,27 @@ client_secret = config['DEFAULT']['CLIENT_SECRET']
 # The URL of your ArcGIS Online organization
 org_url = 'https://martaonline.maps.arcgis.com'
 
-# Get the OAuth token
-# print("Opening browser to obtain an OAuth token...")
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-gis = GIS(org_url, client_id=client_id, client_secret=client_secret)
-print("Sign in completed.")
+def get_token():
+    config = ConfigParser()
+    config.read('config.ini')
+    client_id = config['DEFAULT']['CLIENT_ID']
+    client_secret = config['DEFAULT']['CLIENT_SECRET']
+    params = {
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'grant_type': "client_credentials"
+    }
+    request = requests.get('https://www.arcgis.com/sharing/rest/oauth2/token',
+                          params=params)
+    response = request.json()
+    token = response["access_token"]
+    return token
+
+token = get_token()
+
+print("ArcGIS Online")
+gis = GIS(org_url, token = token)
+print("Logged in to " + gis.properties.portalName)
 max_work = 15 #default value to populate
 
 
